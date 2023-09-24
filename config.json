@@ -1,0 +1,7 @@
+{
+    "src_folder": "src_folder",
+    "dest_folder": "dest_folder",
+    "otsu_threshold": 100,
+    "num_threads": 4
+  }
+  
