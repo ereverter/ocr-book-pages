@@ -10,7 +10,7 @@ def dewarp_single_image(img_path, additional_args):
     print(f"Processing {img_path}...")
     
     # Default arguments for 'page-dewarp'
-    default_args = ['-nb', '1', '-x', '25', '-y', '50']
+    default_args = ['-nb', '1']
     
     # Run the 'page-dewarp' utility
     subprocess.run(['page-dewarp', img_path] + default_args + additional_args)
