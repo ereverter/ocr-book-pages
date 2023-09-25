@@ -17,44 +17,43 @@ if 'original_img' not in st.session_state:
     st.session_state['extracted_text'] = None
 
 def main():
-    st.title("Image Processing Pipeline")
+    st.title("OCR Pipeline")
     st.sidebar.header("Processing Steps")
     processing_mode = st.selectbox("Processing Mode", ["Single Image", "Bulk Images"], key='processing_mode_select')
 
     if processing_mode == "Single Image":
         uploaded_file = st.file_uploader("Choose an image...", type=['jpg', 'png', 'jpeg', 'tiff'])
-        
+
         if uploaded_file:
             image = cv2.imdecode(np.frombuffer(uploaded_file.read(), np.uint8), -1)
             st.session_state.original_img = image
-            
+
             # Create placeholders here
-            image_placeholder = st.empty()
-            text_placeholder = st.empty()
-            
-            process_single_image(image_placeholder, text_placeholder)
+            col11, col12 = st.columns([2, 3])  # 2:3 ratio for image and text
+            with col11:
+                image_placeholder = st.empty()
+                image_placeholder.image(image, caption=f"original_img", use_column_width='auto')
+                available_options = ['original_img', 'dewarped_img', 'preprocessed_img']
+                selection = st.selectbox("Choose to display:", available_options, key=f'display_select')
+                update_image_based_on_selection(image_placeholder, selection)
+            with col12:
+                text_placeholder = st.empty()
 
-def process_single_image(image_placeholder, text_placeholder):
-    update_selector('original', image_placeholder, text_placeholder)  
-    dewarp_step(image_placeholder, text_placeholder)
-    preprocess_step(image_placeholder, text_placeholder)
-    ocr_step(image_placeholder, text_placeholder)
+            dewarp_step(image_placeholder, text_placeholder)
+            preprocess_step(image_placeholder, text_placeholder)
+            ocr_step(image_placeholder, text_placeholder)
 
-def update_selector(step, image_placeholder, text_placeholder):
-    options = ['original_img', 'dewarped_img', 'preprocessed_img', 'extracted_text']
-    available_options = [key for key in options if st.session_state[key] is not None]
-    selection = st.selectbox("Choose to display:", available_options, key=f'display_select_{step}')
-    
-    # Update placeholders based on the selection
-    if selection.endswith('_img'):
-        image_placeholder.image(st.session_state[selection], caption=f"{selection} Image", use_column_width='auto')
-    else:
-        text_placeholder.text(st.session_state[selection])
+def update_image_based_on_selection(image_placeholder, selection):
+    if st.session_state[selection] is not None:
+        image_placeholder.image(st.session_state[selection], caption=f"{selection}", use_column_width='auto')
 
+def update_text(text_placeholder, text):
+    text_placeholder.empty()
+    text_placeholder.write(text)
 
 def dewarp_step(image_placeholder, text_placeholder):
-    with st.sidebar.expander("1. Dewarping"):
-        st.write("Page Dewarp Options:")
+    dewarp_button_state = st.sidebar.button("Dewarp", key="dewarp-btn")
+    with st.sidebar.expander("1. Dewarping Options"):
         
         # With default value and placeholder
         page_margin_x = st.text_input("Page Margin X", value="25", placeholder="25")
@@ -63,8 +62,7 @@ def dewarp_step(image_placeholder, text_placeholder):
         # Text area for additional args with example in placeholder
         additional_args_str = st.text_area("Additional Arguments", placeholder="-z 0")
 
-        if st.button("Dewarp"):
-            start_time = time.time()
+        if dewarp_button_state:
             
             # Parse additional arguments from text_area
             additional_args_list = additional_args_str.split()
@@ -97,16 +95,13 @@ def dewarp_step(image_placeholder, text_placeholder):
                 else:
                     st.error(f"Output image at {dewarped_image_path} does not exist.")
 
-            elapsed_time = time.time() - start_time
-            st.write(f"Dewarping took {elapsed_time:.2f} seconds")
-
             if dewarped_img is not None:
                 st.session_state.dewarped_img = dewarped_img  # Save to session_state
-                update_selector('dewarped', image_placeholder, text_placeholder)  # Call after dewarping
+                update_image_based_on_selection(image_placeholder, 'dewarped_img')
 
 def preprocess_step(image_placeholder, text_placeholder):
-    with st.sidebar.expander("2. Preprocessing"):
-        st.write("Preprocess Options:")
+    preprocess_button_state = st.sidebar.button("Preprocess", key="preprocess-btn")
+    with st.sidebar.expander("2. Preprocessing Options"):
         
         blur_type_arg = st.selectbox("Blur Type", ["median", "gaussian"])
         thresh_type_arg = st.selectbox("Threshold Type", ["otsu", "adaptive", "binary"])
@@ -122,7 +117,7 @@ def preprocess_step(image_placeholder, text_placeholder):
         erode_iter_arg = st.number_input("Erosion Iterations", min_value=0, value=1)
         dilate_iter_arg = st.number_input("Dilation Iterations", min_value=0, value=1)
         
-        if st.button("Preprocess"):
+        if preprocess_button_state:
             preprocess_args = {
                 "blur_type": blur_type_arg,
                 "thresh_type": thresh_type_arg,
@@ -136,44 +131,32 @@ def preprocess_step(image_placeholder, text_placeholder):
                 "dilate_iter": dilate_iter_arg
             }
 
-            start_time = time.time()
-
             # Call your preprocess_image function here
             preprocessed_image = preprocess_image(st.session_state.dewarped_img, **preprocess_args)
-
-            elapsed_time = time.time() - start_time
-            st.write(f"Preprocessing took {elapsed_time:.2f} seconds")
     
             if preprocessed_image is not None:
                 st.session_state.preprocessed_img = preprocessed_image  # Save to session_state
-                update_selector('preprocessed', image_placeholder, text_placeholder)  # Call after preprocessing
+                update_image_based_on_selection(image_placeholder, 'preprocessed_img')
 
 def ocr_step(image_placeholder, text_placeholder):
-    with st.sidebar.expander("3. OCR"):
-        st.write("OCR Options:")
+    ocr_button_state = st.sidebar.button("OCR", key="ocr-btn")
+    with st.sidebar.expander("3. OCR Options"):
         
         lang_arg = st.text_input("OCR Language", value="eng")
         nan_thresh_arg = st.slider("NaN Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
         
-        if st.button("Extract Text"):
+        if ocr_button_state:
             ocr_args = {
                 "lang": lang_arg,
                 "nan_thresh": nan_thresh_arg
             }
 
-            start_time = time.time()
-
             # Call your get_text function here
             extracted_text = get_text(st.session_state.preprocessed_img, **ocr_args)
             
-            elapsed_time = time.time() - start_time
-            st.write(f"Text extraction took {elapsed_time:.2f} seconds")
-            st.write("Extracted Text:")
-            st.write(extracted_text)
-
             if extracted_text is not None:
                 st.session_state.extracted_text = extracted_text  # Save to session_state
-                update_selector('text', image_placeholder, text_placeholder)  # Call after text extraction
+                update_text(text_placeholder, extracted_text)
 
 if __name__ == "__main__":
     main()
