@@ -1,4 +1,4 @@
-numpy==1.22.3
+numpy==1.23.5
 opencv_python==4.8.0.76
 pandas==2.0.3
 pytesseract==0.3.10
