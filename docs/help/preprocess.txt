@@ -1,0 +1,22 @@
+**Preprocessing Step Explanation:**
+The preprocessing step prepares the image for Optical Character Recognition (OCR) by enhancing the features and reducing the noise in the image. Here are the explanations for the parameters available in this step:
+
+- **Blur Type:**
+    - *Median Blur:* This type of blur is used to remove noise from the image while preserving the edges. It replaces each pixel's value with the median value of the neighboring pixels.
+    - *Gaussian Blur:* This type of blur is used to smoothen the image and reduce the detail/noise. It uses a Gaussian kernel to convolve with the image.
+
+- **Threshold Type:**
+    - *Otsu:* This is an automatic thresholding method which determines the threshold value by maximizing the variance between two classes of pixels.
+    - *Adaptive:* This method computes the threshold value for each pixel based on a window of neighboring pixels.
+    - *Binary:* A fixed threshold value is used to classify pixels into two groups.
+
+- **Minimum Threshold:** The minimum value used for thresholding. All pixel values less than this value will be set to zero (white).
+- **Maximum Threshold:** The maximum value used for thresholding. All pixel values greater than this value will be set to the maximum pixel value (black).
+
+- **Noise Kernel Size:** The size of the kernel used for noise removal. A larger kernel will remove more noise but may also remove important features.
+- **Erode Kernel Size:** The size of the kernel used for erosion operation which erodes away the boundaries of the foreground object. Thinens the text.
+- **Dilate Kernel Size:** The size of the kernel used for dilation operation which enlarges the boundaries of the foreground object. Boldens the text.
+
+- **Noise Removal Iterations:** The number of iterations for noise removal operation.
+- **Erosion Iterations:** The number of iterations for erosion operation.
+- **Dilation Iterations:** The number of iterations for dilation operation.

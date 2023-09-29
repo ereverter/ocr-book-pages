@@ -1,0 +1,4 @@
+**Dewarping Step Explanation:**
+This step attempts to correct any page warping artifacts that are present in the scanned image. In other words, get the lines straight so the OCR engine can read them properly.
+- **Page Margin X/Y:** These fields allow you to specify the margins.
+- **Additional Arguments:** You can provide additional arguments for the dewarping process. Check the [page-dewarp](https://github.com/lmmx/page-dewarp) project for more information.

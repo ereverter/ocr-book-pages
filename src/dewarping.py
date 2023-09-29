@@ -1,54 +1,52 @@
-#usr/bin/env python3
+#!/usr/bin/env python3
 import os
 import subprocess
 import shutil
 import threading
 import argparse
-import time
 
-def dewarp_single_image(img_path, additional_args):
-    print(f"Processing {img_path}...")
-    
-    # Default arguments for 'page-dewarp'
-    default_args = ['-nb', '1']
-    
-    # Run the 'page-dewarp' utility
-    subprocess.run(['page-dewarp', img_path] + default_args + additional_args)
+class ImageDewarper:
+    def __init__(self, src_folder=None, dest_folder=None, additional_args=None):
+        self.src_folder = src_folder
+        self.dest_folder = dest_folder
+        self.additional_args = additional_args or []
 
-def move_dewarped_images(dest_folder):
-    current_dir = os.getcwd()
-    
-    # Loop through each file in the current directory
-    for img_name in os.listdir(current_dir):
-        if img_name.endswith(('_thresh.jpg', '_thresh.jpeg', '_thresh.png')):
-            dewarped_img_path = os.path.join(current_dir, img_name)
-            shutil.move(dewarped_img_path, os.path.join(dest_folder, img_name))
+    def dewarp_single_image(self, img_path, additional_args=None):
+        if additional_args is None:
+            additional_args = self.additional_args
+        print(f"Processing {img_path}...")
+        default_args = ['-nb', '1']
+        subprocess.run(['page-dewarp', img_path] + default_args + additional_args)
 
-# Function to dewarp all images in a source folder and store them in a destination folder
-def dewarp_images(src_folder, dest_folder, additional_args):
-    if not os.path.exists(src_folder):
-        print("Source folder does not exist.")
-        return
+    def move_dewarped_images(self):
+        current_dir = os.getcwd()
+        for img_name in os.listdir(current_dir):
+            if img_name.endswith(('_thresh.jpg', '_thresh.jpeg', '_thresh.png')):
+                dewarped_img_path = os.path.join(current_dir, img_name)
+                shutil.move(dewarped_img_path, os.path.join(self.dest_folder, img_name))
 
-    if not os.path.exists(dest_folder):
-        os.makedirs(dest_folder)
+    def dewarp_images(self):
+        if not os.path.exists(self.src_folder):
+            print("Source folder does not exist.")
+            return
 
-    threads = []
+        if not os.path.exists(self.dest_folder):
+            os.makedirs(self.dest_folder)
 
-    for img_name in os.listdir(src_folder):
-        if img_name.endswith(('.jpg', '.jpeg', '.png')):
-            img_path = os.path.join(src_folder, img_name)
-            thread = threading.Thread(target=dewarp_single_image, args=(img_path, additional_args))
-            threads.append(thread)
-            thread.start()
+        threads = []
 
-    for thread in threads:
-        thread.join()
+        for img_name in os.listdir(self.src_folder):
+            if img_name.endswith(('.jpg', '.jpeg', '.png')):
+                img_path = os.path.join(self.src_folder, img_name)
+                thread = threading.Thread(target=self.dewarp_single_image, args=(img_path,))
+                threads.append(thread)
+                thread.start()
 
-    # Move the dewarped images after all threads have finished
-    move_dewarped_images(dest_folder)
+        for thread in threads:
+            thread.join()
 
-    print("All images have been processed.")
+        self.move_dewarped_images()
+        print("All images have been processed.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Dewarp images in a folder.')
@@ -56,4 +54,6 @@ if __name__ == "__main__":
     parser.add_argument('dest_folder', help='Destination folder to store dewarped images.')
     parser.add_argument('--additional_args', nargs='*', default=[], help='Additional command-line arguments for page-dewarp.')
     args = parser.parse_args()
-    dewarp_images(args.src_folder, args.dest_folder, args.additional_args)
+
+    dewarper = ImageDewarper(args.src_folder, args.dest_folder, args.additional_args)
+    dewarper.dewarp_images()

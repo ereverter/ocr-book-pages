@@ -1,0 +1,11 @@
+**OCR (Optical Character Recognition) Step Explanation:**
+In this step, the app attempts to extract text from the preprocessed image. It does so with [Tesseract](https://github.com/tesseract-ocr/tesseract).
+
+- **OCR Language:**
+    - The language code for the OCR process. It should match the language of the text you are trying to extract.
+    - You can specify multiple languages by separating the codes with a plus sign, e.g., `eng+spa` for both English and Spanish.
+
+- **NaN Threshold:**
+    - This parameter determines the threshold for considering a recognition as invalid or a 'NaN' (Not a Number). 
+    - A lower value makes the OCR process more strict, potentially missing some valid text but reducing false recognitions. 
+    - A higher value makes the OCR process more lenient, potentially capturing more valid text but increasing false recognitions.
