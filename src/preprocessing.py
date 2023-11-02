@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import cv2
 import os
@@ -28,9 +29,11 @@ class ImagePreprocessor:
             image = cv2.medianBlur(image, 5)
         elif blur_type == "gaussian":
             image = cv2.GaussianBlur(image, (5, 5), 0)
+        else:
+            pass
             
         if thresh_type == "otsu":
-            _, image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            _, image = cv2.threshold(image, min_thresh, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         elif thresh_type == "adaptive":
             image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
         else:  # binary
@@ -94,7 +97,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Preprocess images in a folder.')
     parser.add_argument('src_folder', help='Source folder containing images to be processed.')
     parser.add_argument('dest_folder', help='Destination folder to store processed images.')
-    parser.add_argument('--blur_type', choices=["median", "gaussian"], default="median", help='Type of blur to apply.')
+    parser.add_argument('--blur_type', choices=["median", "gaussian", "none"], default="median", help='Type of blur to apply.')
     parser.add_argument('--thresh_type', choices=["otsu", "adaptive", "binary"], default="otsu", help='Type of thresholding to apply.')
     parser.add_argument('--min_thresh', type=int, default=127, help='Minimum threshold value for binary thresholding.')
     parser.add_argument('--max_thresh', type=int, default=255, help='Maximum threshold value for binary thresholding.')
