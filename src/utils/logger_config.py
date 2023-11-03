@@ -11,9 +11,11 @@ def setup_logger(log_file=None):
         project_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
         log_file = os.path.join(project_dir, 'ocr.log')
     
-    handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=30)  # 10 MB limit, keep 30 old logs
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    if not logger.handlers:  # Check if handlers are already attached
+        handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=30)  # 10 MB limit, keep 30 old logs
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
     
     return logger
+

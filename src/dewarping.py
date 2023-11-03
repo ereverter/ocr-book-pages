@@ -4,7 +4,7 @@ import subprocess
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 import argparse
-from utils.logger_config import setup_logger
+from .utils.logger_config import setup_logger
 import time
 
 logger = setup_logger()
@@ -62,11 +62,14 @@ def main(args):
         logger.error(f"Invalid input path: {args.input_path}")
     logger.info(f"Dewarping complete in {time.time() - start_time}.")
 
-if __name__ == "__main__":
+def set_up_argparse():
     parser = argparse.ArgumentParser(description='Dewarp images in a folder.')
     parser.add_argument('input_path', help='Path of the image or folder to process.')
     parser.add_argument('output_dir', help='Destination folder to store processed images.')
     parser.add_argument('--additional_args', nargs='*', default=[], help='Additional command-line arguments for page-dewarp.')
-    
+    return parser
+
+if __name__ == "__main__":
+    parser = set_up_argparse()
     args = parser.parse_args()
     main(args)

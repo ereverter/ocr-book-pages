@@ -4,7 +4,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import argparse
 import os
 import time
-from utils.logger_config import setup_logger
+from .utils.logger_config import setup_logger
 
 logger = setup_logger()
 
@@ -98,10 +98,14 @@ def main(args):
 
     logger.info(f'Cleaning from {args.input_path} to {args.output_dir} complete in {time.time() - start_time}.')
 
-if __name__ == "__main__":
+def set_up_parser():
     parser = argparse.ArgumentParser(description='Process text files using TextCleanerLLM.')
     parser.add_argument('input_path', help='Path of the text file or folder to process.')
     parser.add_argument('output_dir', help='Destination folder to store processed text.')
     parser.add_argument('--prompt_template', default=None, help='Path to prompt template file.')
+    return parser
+
+if __name__ == "__main__":
+    parser = set_up_parser()
     args = parser.parse_args()
     main(args)

@@ -4,7 +4,7 @@ import cv2
 import argparse
 import pytesseract
 from concurrent.futures import ThreadPoolExecutor
-from utils.logger_config import setup_logger
+from .utils.logger_config import setup_logger
 import time
 
 logger = setup_logger()
@@ -71,12 +71,15 @@ def main(args):
         logger.error(f"Invalid input path: {args.input_path}")
     logger.info(f'Extraction from {args.input_path} to {args.output_dir} complete in {time.time() - start_time}.')
 
-if __name__ == "__main__":
+def set_up_argparse():
     parser = argparse.ArgumentParser(description='Extract text from a given image path.')
     parser.add_argument('input_path', help='Path of the image or folder to process.')
     parser.add_argument('output_dir', help='Destination folder to store processed images.')
     parser.add_argument('--lang', default='eng', help='Language used by Tesseract. Default is English.')
     parser.add_argument('--nan_thresh', type=float, default=0.5, help='NaN threshold for cleanup.')
-    
+    return parser
+
+if __name__ == "__main__":
+    parser = set_up_argparse()
     args = parser.parse_args()
     main(args)
