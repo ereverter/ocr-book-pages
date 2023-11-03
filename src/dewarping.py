@@ -2,8 +2,12 @@
 import os
 import subprocess
 import shutil
-import threading
+from concurrent.futures import ThreadPoolExecutor
 import argparse
+from utils.logger_config import setup_logger
+import time
+
+logger = setup_logger()
 
 class ImageDewarper:
     def __init__(self, src_folder=None, dest_folder=None, additional_args=None):
@@ -33,27 +37,36 @@ class ImageDewarper:
         if not os.path.exists(self.dest_folder):
             os.makedirs(self.dest_folder)
 
-        threads = []
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(self.dewarp_single_image, os.path.join(self.src_folder, img_name)) 
+                       for img_name in os.listdir(self.src_folder) 
+                       if img_name.endswith(('.jpg', '.jpeg', '.png'))]
 
-        for img_name in os.listdir(self.src_folder):
-            if img_name.endswith(('.jpg', '.jpeg', '.png')):
-                img_path = os.path.join(self.src_folder, img_name)
-                thread = threading.Thread(target=self.dewarp_single_image, args=(img_path,))
-                threads.append(thread)
-                thread.start()
-
-        for thread in threads:
-            thread.join()
+        for future in futures:
+            future.result()  # to raise any exception that occurred during processing
 
         self.move_dewarped_images()
         print("All images have been processed.")
 
+def main(args):
+    dewarper = ImageDewarper(args.input_path, args.output_dir, args.additional_args)
+
+    logger.info("Dewarping images...")
+    start_time = time.time()
+    if os.path.isdir(args.input_path):
+        dewarper.dewarp_images()
+    elif os.path.isfile(args.input_path):
+        dewarper.dewarp_single_image(args.input_path)
+        dewarper.move_dewarped_images()
+    else:
+        logger.error(f"Invalid input path: {args.input_path}")
+    logger.info(f"Dewarping complete in {time.time() - start_time}.")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Dewarp images in a folder.')
-    parser.add_argument('src_folder', help='Source folder containing images to be dewarped.')
-    parser.add_argument('dest_folder', help='Destination folder to store dewarped images.')
+    parser.add_argument('input_path', help='Path of the image or folder to process.')
+    parser.add_argument('output_dir', help='Destination folder to store processed images.')
     parser.add_argument('--additional_args', nargs='*', default=[], help='Additional command-line arguments for page-dewarp.')
+    
     args = parser.parse_args()
-
-    dewarper = ImageDewarper(args.src_folder, args.dest_folder, args.additional_args)
-    dewarper.dewarp_images()
+    main(args)
