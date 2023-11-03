@@ -71,15 +71,14 @@ def main(args):
         logger.error(f"Invalid input path: {args.input_path}")
     logger.info(f'Extraction from {args.input_path} to {args.output_dir} complete in {time.time() - start_time}.')
 
-def set_up_argparse():
-    parser = argparse.ArgumentParser(description='Extract text from a given image path.')
+def parser_add_arguments(parser):
     parser.add_argument('input_path', help='Path of the image or folder to process.')
     parser.add_argument('output_dir', help='Destination folder to store processed images.')
     parser.add_argument('--lang', default='eng', help='Language used by Tesseract. Default is English.')
-    parser.add_argument('--nan_thresh', type=float, default=0.5, help='NaN threshold for cleanup.')
-    return parser
+    parser.add_argument('--nan_thresh', type=float, default=0.5, help='NaN threshold for cleanup. That is, greatly unrecognized blocks of text will be removed.')
 
 if __name__ == "__main__":
-    parser = set_up_argparse()
+    parser = argparse.ArgumentParser(description='Extract text from a given image path.')
+    parser_add_arguments(parser)
     args = parser.parse_args()
     main(args)

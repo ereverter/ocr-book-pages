@@ -120,9 +120,7 @@ def main(args):
         logger.error(f"Invalid input path: {args.input_path}")
     logger.info(f'Preprocessing from {args.input_path} to {args.output_dir} complete in {time.time() - start_time}.')
 
-
-def set_up_argparse():
-    parser = argparse.ArgumentParser(description='Preprocess images in a folder.')
+def parser_add_arguments(parser):
     parser.add_argument('input_path', help='Path of the image or folder to process.')
     parser.add_argument('output_dir', help='Destination folder to store processed images.')
     parser.add_argument('--blur_type', choices=["median", "gaussian", "none"], default="median", help='Type of blur to apply.')
@@ -135,9 +133,9 @@ def set_up_argparse():
     parser.add_argument('--noise_iter', type=int, default=1, help='Iterations for noise removal.')
     parser.add_argument('--erode_iter', type=int, default=1, help='Iterations for erosion.')
     parser.add_argument('--dilate_iter', type=int, default=1, help='Iterations for dilation.')
-    return parser
 
 if __name__ == "__main__":
-    parser = set_up_argparse()
+    parser = argparse.ArgumentParser(description='Preprocess images in a folder.')
+    parser_add_arguments(parser)
     args = parser.parse_args()
     main(args)

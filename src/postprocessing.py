@@ -49,16 +49,20 @@ class TextCleanerLLM:
         self.pipe = pipeline("text-generation",
                              model=self.model,
                              tokenizer=self.tokenizer,
+                             return_full_text=False,
                              **self.pipeline_params)
 
-    def set_prompt_template(self, prompt_template_file):
+    def set_prompt_template(self, prompt_template_file): ###
+        if not os.path.exists(prompt_template_file):
+            logger.error(f"Prompt template file {prompt_template_file} does not exist.")
+            return
         with open(prompt_template_file, 'r') as f:
             prompt_template = json.load(f)
         self.prompt_template = prompt_template['messages']
 
-    def clean_text(self, text):
+    def clean_text(self, text): ###
         if self.prompt_template is None:
-            prompt_template = [{'content': text}]
+            prompt_template = [{'role': 'user', 'content': text}]
         else:
             prompt_template = self.prompt_template.copy()
             prompt_template[-1]['content'] = prompt_template[-1]['content'].format(text=text)
@@ -69,7 +73,8 @@ class TextCleanerLLM:
 def main(args):
     logger.info("Loading LLM...")
     cleaner = TextCleanerLLM()
-    cleaner.set_prompt_template(args.prompt_template)
+    if args.prompt_template is not None:
+        cleaner.set_prompt_template(args.prompt_template)
 
     logger.info("Cleaning text...")
     start_time = time.time()
@@ -98,14 +103,13 @@ def main(args):
 
     logger.info(f'Cleaning from {args.input_path} to {args.output_dir} complete in {time.time() - start_time}.')
 
-def set_up_parser():
-    parser = argparse.ArgumentParser(description='Process text files using TextCleanerLLM.')
+def parser_add_arguments(parser):
     parser.add_argument('input_path', help='Path of the text file or folder to process.')
     parser.add_argument('output_dir', help='Destination folder to store processed text.')
-    parser.add_argument('--prompt_template', default=None, help='Path to prompt template file.')
-    return parser
+    parser.add_argument('--prompt_template', required=True, help='Path to prompt template file.') ### 
 
 if __name__ == "__main__":
-    parser = set_up_parser()
+    parser = argparse.ArgumentParser(description='Process text files using TextCleanerLLM.')
+    parser_add_arguments(parser)
     args = parser.parse_args()
     main(args)
