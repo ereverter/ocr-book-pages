@@ -1,7 +1,13 @@
+#!/usr/bin/env python3
 import os
 import cv2
 import argparse
 import pytesseract
+from concurrent.futures import ThreadPoolExecutor
+from .utils.logger_config import setup_logger
+import time
+
+logger = setup_logger()
 
 class TextExtractor:
     def __init__(self, lang='eng', nan_thresh=0.5):
@@ -32,21 +38,47 @@ class TextExtractor:
 
     def _get_word_group(self, df):
         return df['page_num'].astype(str) + '_' + df['block_num'].astype(str) + '_' + df['par_num'].astype(str)
+    
+    def process_single_image(self, image_path, output_dir):
+        if os.path.exists(image_path) and image_path.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff')):
+            image = cv2.imread(image_path)
+            extracted_text = self.get_text(image)
+            output_filename = os.path.splitext(os.path.basename(image_path))[0] + '.txt'
+            output_path = os.path.join(output_dir, output_filename)
+            with open(output_path, 'w') as file:
+                file.write(extracted_text)
+        else:
+            logger.info(f"{image_path} is not a valid image file.")
+
+    def process_images(self, image_folder, output_dir):
+        with ThreadPoolExecutor() as executor:
+            for filename in os.listdir(image_folder):
+                if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff')):
+                    image_path = os.path.join(image_folder, filename)
+                    executor.submit(self.process_single_image, image_path, output_dir)
+
+def main(args):
+    text_extractor = TextExtractor(args.lang, args.nan_thresh)
+    
+    logger.info('Extracting text...')
+    start_time = time.time()
+    
+    if os.path.isdir(args.input_path):
+        text_extractor.process_images(args.input_path, args.output_dir)
+    elif os.path.isfile(args.input_path):
+        text_extractor.process_single_image(args.input_path, args.output_dir)
+    else:
+        logger.error(f"Invalid input path: {args.input_path}")
+    logger.info(f'Extraction from {args.input_path} to {args.output_dir} complete in {time.time() - start_time}.')
+
+def parser_add_arguments(parser):
+    parser.add_argument('input_path', help='Path of the image or folder to process.')
+    parser.add_argument('output_dir', help='Destination folder to store processed images.')
+    parser.add_argument('--lang', default='eng', help='Language used by Tesseract. Default is English.')
+    parser.add_argument('--nan_thresh', type=float, default=0.5, help='NaN threshold for cleanup. That is, greatly unrecognized blocks of text will be removed.')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Extract text from a given image path.')
-    parser.add_argument('image_path', help='Path of the image to extract text from.')
-    parser.add_argument('--lang', default='eng', help='Language used by Tesseract. Default is English.')
-    parser.add_argument('--nan_thresh', type=float, default=0.5, help='NaN threshold for cleanup.')
-    
+    parser_add_arguments(parser)
     args = parser.parse_args()
-    
-    if os.path.exists(args.image_path) and args.image_path.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff')):
-        image = cv2.imread(args.image_path)
-        text_extractor = TextExtractor(args.lang, args.nan_thresh)
-        extracted_text = text_extractor.get_text(image)
-        
-        print("Extracted Text:")
-        print(extracted_text)
-    else:
-        print(f"Invalid image path: {args.image_path}")
+    main(args)

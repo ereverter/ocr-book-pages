@@ -1,7 +1,13 @@
+#!/usr/bin/env python3
 import argparse
 import cv2
 import os
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor
+import time
+from .utils.logger_config import setup_logger
+
+logger = setup_logger()
 
 class ImagePreprocessor:
     def __init__(self, blur_type="median", thresh_type="otsu", min_thresh=127, max_thresh=255, noise_kernel=1, erode_kernel=2, dilate_kernel=2, noise_iter=1, erode_iter=1, dilate_iter=1):
@@ -28,9 +34,11 @@ class ImagePreprocessor:
             image = cv2.medianBlur(image, 5)
         elif blur_type == "gaussian":
             image = cv2.GaussianBlur(image, (5, 5), 0)
+        else:
+            pass
             
         if thresh_type == "otsu":
-            _, image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            _, image = cv2.threshold(image, min_thresh, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         elif thresh_type == "adaptive":
             image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
         else:  # binary
@@ -81,20 +89,41 @@ class ImagePreprocessor:
         final_image = self.remove_and_add_borders(thick_image)
         return final_image
 
-    def preprocess_images(self, src_folder, dest_folder, preprocessor):
-        for filename in os.listdir(src_folder):
-            if filename.endswith(('.png', '.jpg', '.jpeg', '.tiff')):
-                image_path = os.path.join(src_folder, filename)
-                image = cv2.imread(image_path)
-                final_image = preprocessor.preprocess_single_image(image)
-                dest_path = os.path.join(dest_folder, filename)
-                cv2.imwrite(dest_path, final_image)
+    def preprocess_images(self, src_folder, dest_folder):
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for filename in os.listdir(src_folder):
+                if filename.endswith(('.png', '.jpg', '.jpeg', '.tiff')):
+                    image_path = os.path.join(src_folder, filename)
+                    dest_path = os.path.join(dest_folder, filename)
+                    futures.append(executor.submit(self.process_single_image, image_path, dest_path))
+            for future in futures:
+                future.result()  # to raise any exception that occurred during processing
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Preprocess images in a folder.')
-    parser.add_argument('src_folder', help='Source folder containing images to be processed.')
-    parser.add_argument('dest_folder', help='Destination folder to store processed images.')
-    parser.add_argument('--blur_type', choices=["median", "gaussian"], default="median", help='Type of blur to apply.')
+    def process_single_image(self, image_path, dest_path):
+        image = cv2.imread(image_path)
+        final_image = self.preprocess_single_image(image)
+        cv2.imwrite(dest_path, final_image)
+
+def main(args):
+    preprocessor = ImagePreprocessor(args.blur_type, args.thresh_type, args.min_thresh, args.max_thresh, args.noise_kernel, args.erode_kernel, args.dilate_kernel, args.noise_iter, args.erode_iter, args.dilate_iter)
+
+    logger.info("Preprocessing images...")
+    start_time = time.time()
+    if os.path.isdir(args.input_path):
+        preprocessor.preprocess_images(args.input_path, args.output_dir)
+    elif os.path.isfile(args.input_path):
+        filename = os.path.basename(args.input_path)
+        dest_path = os.path.join(args.output_dir, filename)
+        preprocessor.process_single_image(args.input_path, dest_path)
+    else:
+        logger.error(f"Invalid input path: {args.input_path}")
+    logger.info(f'Preprocessing from {args.input_path} to {args.output_dir} complete in {time.time() - start_time}.')
+
+def parser_add_arguments(parser):
+    parser.add_argument('input_path', help='Path of the image or folder to process.')
+    parser.add_argument('output_dir', help='Destination folder to store processed images.')
+    parser.add_argument('--blur_type', choices=["median", "gaussian", "none"], default="median", help='Type of blur to apply.')
     parser.add_argument('--thresh_type', choices=["otsu", "adaptive", "binary"], default="otsu", help='Type of thresholding to apply.')
     parser.add_argument('--min_thresh', type=int, default=127, help='Minimum threshold value for binary thresholding.')
     parser.add_argument('--max_thresh', type=int, default=255, help='Maximum threshold value for binary thresholding.')
@@ -104,7 +133,9 @@ if __name__ == "__main__":
     parser.add_argument('--noise_iter', type=int, default=1, help='Iterations for noise removal.')
     parser.add_argument('--erode_iter', type=int, default=1, help='Iterations for erosion.')
     parser.add_argument('--dilate_iter', type=int, default=1, help='Iterations for dilation.')
-    
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Preprocess images in a folder.')
+    parser_add_arguments(parser)
     args = parser.parse_args()
-    preprocessor = ImagePreprocessor(args.blur_type, args.thresh_type, args.min_thresh, args.max_thresh, args.noise_kernel, args.erode_kernel, args.dilate_kernel, args.noise_iter, args.erode_iter, args.dilate_iter)
-    preprocessor.process_images(args.src_folder, args.dest_folder, preprocessor)
+    main(args)

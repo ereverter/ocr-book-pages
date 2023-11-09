@@ -1,0 +1,5 @@
+transformers==4.35.0
+accelerate==0.24.1
+torch==2.1.0
+optimum==1.13.2
+auto-gptq==0.4.2

@@ -53,6 +53,7 @@ streamlit run app.py
 
 ## Work In Progress
 - [x] Demo
-- [ ] Batch processing
-- [ ] Clean extracted text using an LLM
+- [x] Batch processing
+- [x] Clean extracted text using an LLM
+    - [ ] Refactor code and improve prompts
 - [ ] Automatically set the preprocessing parameters given an input

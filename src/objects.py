@@ -1,4 +1,4 @@
-#usr/bin/env python3
+#!/usr/bin/env python3
 
 class ProcessedImage:
     def __init__(self, original_img):

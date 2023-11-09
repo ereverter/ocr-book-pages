@@ -211,7 +211,7 @@ class PreprocessUI:
             st.sidebar.info(help_text)
 
         with st.sidebar.expander("2. Preprocessing Options"):
-            self.blur_type_arg = st.selectbox("Blur Type", ["gaussian", "median"])
+            self.blur_type_arg = st.selectbox("Blur Type", ["gaussian", "median", "none"])
             self.thresh_type_arg = st.selectbox("Threshold Type", ["binary", "otsu", "adaptive"])
             
             self.min_thresh_arg = st.slider("Minimum Threshold", min_value=0, max_value=255, value=127)
