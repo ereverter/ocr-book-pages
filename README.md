@@ -6,7 +6,7 @@
 
 This is an OCR (Optical Character Recognition) pipeline for book pages. The steps include image dewarping, preprocessing, and OCR text extraction. There is a demo for single image processing and some languages deployed in Streamlit. It uses [page-dewarp](https://github.com/lmmx/page-dewarp), [opencv](https://github.com/opencv/opencv), and [tesseract](https://github.com/tesseract-ocr/tesseract) for each step. The batch processing within the app (locally deployed) is a work in progress. It can be done using commands, but the app does not have the interface for it yet.
 
-![Pipeline](https://github.com/eReverter/ocr-book-pages/blob/main/images/pipeline.jpg)
+![Pipeline](https://github.com/ereverter/ocr-book-pages/blob/main/images/pipeline.jpg)
 
 ## Features
 
@@ -18,7 +18,7 @@ This is an OCR (Optical Character Recognition) pipeline for book pages. The step
 
 1. Clone this repository
     ```bash
-    git clone https://github.com/eReverter/ocr-book-pages.git
+    git clone https://github.com/ereverter/ocr-book-pages.git
     ```
 
 2. Navigate to the project directory and install dependencies
